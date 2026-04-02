@@ -64,6 +64,9 @@ io.on('connection', (socket) => {
   const userId = socket.user._id.toString();
   onlineUsers.set(userId, socket.id);
 
+  console.log(`✅ User connected: ${socket.user.name} (${userId})`);
+  console.log(`👥 Total online users: ${onlineUsers.size}`);
+
   // Notify others this user is online
   socket.broadcast.emit('user_online', userId);
 
@@ -73,6 +76,7 @@ io.on('connection', (socket) => {
   // ─── Join a chat room ──────────────────────────────────────
   socket.on('join_chat', (chatId) => {
     socket.join(chatId);
+    console.log(`💬 User ${socket.user.name} joined chat: ${chatId}`);
   });
 
   // ─── Send message ──────────────────────────────────────────
@@ -80,8 +84,13 @@ io.on('connection', (socket) => {
     try {
       if (!text?.trim()) return;
 
+      console.log(`📨 Message from ${socket.user.name}: ${text.trim()}`);
+
       const chat = await Chat.findOne({ _id: chatId, participants: socket.user._id });
-      if (!chat) return;
+      if (!chat) {
+        console.log('❌ Chat not found or user not participant');
+        return;
+      }
 
       const message = { sender: socket.user._id, text: text.trim(), read: false, createdAt: new Date() };
       chat.messages.push(message);
@@ -90,6 +99,8 @@ io.on('connection', (socket) => {
       await chat.save();
 
       const savedMsg = chat.messages[chat.messages.length - 1];
+
+      console.log(`✅ Message saved, emitting to room: ${chatId}`);
 
       // Emit to everyone in the chat room
       io.to(chatId).emit('new_message', {
@@ -117,6 +128,7 @@ io.on('connection', (socket) => {
         }
       }
     } catch (err) {
+      console.error('❌ Error sending message:', err);
       socket.emit('error', { message: 'Failed to send message' });
     }
   });
@@ -142,6 +154,8 @@ io.on('connection', (socket) => {
   socket.on('disconnect', () => {
     onlineUsers.delete(userId);
     socket.broadcast.emit('user_offline', userId);
+    console.log(`❌ User disconnected: ${socket.user.name} (${userId})`);
+    console.log(`👥 Total online users: ${onlineUsers.size}`);
   });
 });
 
