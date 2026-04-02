@@ -4,6 +4,11 @@ const messageSchema = new mongoose.Schema({
   sender:   { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
   text:     { type: String, required: true, trim: true },
   read:     { type: Boolean, default: false },
+  type:     { type: String, enum: ['text', 'image', 'offer', 'template'], default: 'text' },
+  offer:    {
+    amount:   { type: Number },
+    status:   { type: String, enum: ['pending', 'accepted', 'rejected'], default: 'pending' },
+  },
 }, { timestamps: true });
 
 const chatSchema = new mongoose.Schema({

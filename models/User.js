@@ -18,11 +18,36 @@ const userSchema = new mongoose.Schema({
     phone:       { type: String, default: '' },
     city:        { type: String, default: '' },
     state:       { type: String, default: '' },
-    approved:    { type: Boolean, default: true }, // auto-approve for now
+    approved:    { type: Boolean, default: true },
     totalSales:  { type: Number, default: 0 },
     rating:      { type: Number, default: 0 },
     joinedAt:    { type: Date, default: Date.now },
   },
+
+  // Verification status
+  verification: {
+    email:       { type: Boolean, default: false },
+    phone:       { type: Boolean, default: false },
+    identity:    { type: Boolean, default: false },
+    address:     { type: Boolean, default: false },
+  },
+
+  // Trust score (0-100)
+  trustScore: { type: Number, default: 0 },
+
+  // Saved searches
+  savedSearches: [{
+    query:      { type: String },
+    category:   { type: String },
+    minPrice:   { type: Number },
+    maxPrice:   { type: Number },
+    location:   { type: String },
+    alertEnabled: { type: Boolean, default: true },
+    createdAt:  { type: Date, default: Date.now },
+  }],
+
+  // Wishlist
+  wishlist: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Product' }],
 }, { timestamps: true });
 
 userSchema.pre('save', async function () {
