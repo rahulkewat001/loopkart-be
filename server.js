@@ -32,7 +32,8 @@ const server = http.createServer(app);
 const allowedOrigins = [
   'http://localhost:5173',
   'https://loopkarts.in',
-  'https://www.loopkarts.in'
+  'https://www.loopkarts.in',
+  'https://loopkart-be.onrender.com'
 ];
 
 const io = new Server(server, {
@@ -185,4 +186,9 @@ app.use('/api/saved-searches', savedSearchRoutes);
 app.get('/', (req, res) => res.send('Hey , I am healthy!'));
 
 const PORT = process.env.PORT || 5000;
-server.listen(PORT, () => console.log(`🚀 Server running on http://localhost:${PORT}`));
+const HOST = process.env.NODE_ENV === 'production' ? '0.0.0.0' : 'localhost';
+
+server.listen(PORT, HOST, () => {
+  console.log(`🚀 Server running on http://${HOST}:${PORT}`);
+  console.log(`📡 Environment: ${process.env.NODE_ENV || 'development'}`);
+});
