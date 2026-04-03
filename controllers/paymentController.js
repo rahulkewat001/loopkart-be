@@ -10,14 +10,28 @@ const razorpay = new Razorpay({
 // ─── Create Razorpay Order ────────────────────────────────────
 const createPaymentOrder = async (req, res) => {
   try {
+    console.log('Creating Razorpay order...');
+    console.log('Razorpay Key ID:', process.env.RAZORPAY_KEY_ID ? 'Present' : 'Missing');
+    console.log('Razorpay Key Secret:', process.env.RAZORPAY_KEY_SECRET ? 'Present' : 'Missing');
+    
     const { amount } = req.body; // amount in rupees
+    console.log('Order amount:', amount);
+    
+    if (!process.env.RAZORPAY_KEY_ID || !process.env.RAZORPAY_KEY_SECRET) {
+      console.error('Razorpay credentials missing!');
+      return res.status(500).json({ message: 'Payment gateway not configured' });
+    }
+    
     const order = await razorpay.orders.create({
       amount:   Math.round(amount * 100), // paise
       currency: 'INR',
       receipt:  `receipt_${Date.now()}`,
     });
+    
+    console.log('Razorpay order created:', order.id);
     res.json({ orderId: order.id, amount: order.amount, currency: order.currency, keyId: process.env.RAZORPAY_KEY_ID });
   } catch (err) {
+    console.error('Razorpay order creation error:', err);
     res.status(500).json({ message: 'Payment order creation failed', error: err.message });
   }
 };
