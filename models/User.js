@@ -5,9 +5,9 @@ const userSchema = new mongoose.Schema({
   name:           { type: String, required: true, trim: true },
   email:          { type: String, required: true, unique: true, lowercase: true, trim: true },
   password:       { type: String, required: true, minlength: 6 },
+  googleId:       { type: String, default: null },
   role:           { type: String, enum: ['user', 'seller', 'admin'], default: 'user' },
   avatar:         { type: String, default: null },
-  googleId:       { type: String, default: null },
   resetOtp:       { type: String, default: null },
   resetOtpExpiry: { type: Date,   default: null },
   refreshTokens:  [{ type: String }],
@@ -19,36 +19,11 @@ const userSchema = new mongoose.Schema({
     phone:       { type: String, default: '' },
     city:        { type: String, default: '' },
     state:       { type: String, default: '' },
-    approved:    { type: Boolean, default: true },
+    approved:    { type: Boolean, default: true }, // auto-approve for now
     totalSales:  { type: Number, default: 0 },
     rating:      { type: Number, default: 0 },
     joinedAt:    { type: Date, default: Date.now },
   },
-
-  // Verification status
-  verification: {
-    email:       { type: Boolean, default: false },
-    phone:       { type: Boolean, default: false },
-    identity:    { type: Boolean, default: false },
-    address:     { type: Boolean, default: false },
-  },
-
-  // Trust score (0-100)
-  trustScore: { type: Number, default: 0 },
-
-  // Saved searches
-  savedSearches: [{
-    query:      { type: String },
-    category:   { type: String },
-    minPrice:   { type: Number },
-    maxPrice:   { type: Number },
-    location:   { type: String },
-    alertEnabled: { type: Boolean, default: true },
-    createdAt:  { type: Date, default: Date.now },
-  }],
-
-  // Wishlist
-  wishlist: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Product' }],
 }, { timestamps: true });
 
 userSchema.pre('save', async function () {
@@ -67,6 +42,7 @@ userSchema.methods.toJSON = function () {
   delete obj.refreshTokens;
   delete obj.resetOtp;
   delete obj.resetOtpExpiry;
+  delete obj.googleId;
   return obj;
 };
 

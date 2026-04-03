@@ -21,26 +21,30 @@ const sellerRoutes         = require('./routes/sellerRoutes');
 const chatRoutes           = require('./routes/chatRoutes');
 const notificationRoutes   = require('./routes/notificationRoutes');
 const uploadRoutes         = require('./routes/uploadRoutes');
-// const savedSearchRoutes    = require('./routes/savedSearchRoutes');
 
 connectDB();
 
 const app    = express();
 const server = http.createServer(app);
+const allowedOrigins = new Set([
+  'http://localhost:5173',
+  'http://127.0.0.1:5173',
+]);
+const corsOptions = {
+  origin(origin, callback) {
+    // Allow browserless tools like curl/postman and both local Vite host variants.
+    if (!origin || allowedOrigins.has(origin)) {
+      callback(null, true);
+      return;
+    }
+    callback(new Error(`CORS blocked for origin: ${origin}`));
+  },
+  credentials: true,
+};
 
 // ─── Socket.IO Setup ──────────────────────────────────────────
-const allowedOrigins = [
-  'http://localhost:5173',
-  'https://loopkarts.in',
-  'https://www.loopkarts.in',
-  'https://loopkart-be.onrender.com'
-];
-
 const io = new Server(server, {
-  cors: { 
-    origin: allowedOrigins,
-    credentials: true 
-  },
+  cors: corsOptions,
 });
 
 // Online users map: userId -> socketId
@@ -65,9 +69,6 @@ io.on('connection', (socket) => {
   const userId = socket.user._id.toString();
   onlineUsers.set(userId, socket.id);
 
-  console.log(`✅ User connected: ${socket.user.name} (${userId})`);
-  console.log(`👥 Total online users: ${onlineUsers.size}`);
-
   // Notify others this user is online
   socket.broadcast.emit('user_online', userId);
 
@@ -77,7 +78,6 @@ io.on('connection', (socket) => {
   // ─── Join a chat room ──────────────────────────────────────
   socket.on('join_chat', (chatId) => {
     socket.join(chatId);
-    console.log(`💬 User ${socket.user.name} joined chat: ${chatId}`);
   });
 
   // ─── Send message ──────────────────────────────────────────
@@ -85,13 +85,8 @@ io.on('connection', (socket) => {
     try {
       if (!text?.trim()) return;
 
-      console.log(`📨 Message from ${socket.user.name}: ${text.trim()}`);
-
       const chat = await Chat.findOne({ _id: chatId, participants: socket.user._id });
-      if (!chat) {
-        console.log('❌ Chat not found or user not participant');
-        return;
-      }
+      if (!chat) return;
 
       const message = { sender: socket.user._id, text: text.trim(), read: false, createdAt: new Date() };
       chat.messages.push(message);
@@ -100,8 +95,6 @@ io.on('connection', (socket) => {
       await chat.save();
 
       const savedMsg = chat.messages[chat.messages.length - 1];
-
-      console.log(`✅ Message saved, emitting to room: ${chatId}`);
 
       // Emit to everyone in the chat room
       io.to(chatId).emit('new_message', {
@@ -129,7 +122,6 @@ io.on('connection', (socket) => {
         }
       }
     } catch (err) {
-      console.error('❌ Error sending message:', err);
       socket.emit('error', { message: 'Failed to send message' });
     }
   });
@@ -155,16 +147,11 @@ io.on('connection', (socket) => {
   socket.on('disconnect', () => {
     onlineUsers.delete(userId);
     socket.broadcast.emit('user_offline', userId);
-    console.log(`❌ User disconnected: ${socket.user.name} (${userId})`);
-    console.log(`👥 Total online users: ${onlineUsers.size}`);
   });
 });
 
 // ─── Express Middleware ───────────────────────────────────────
-app.use(cors({
-  origin: allowedOrigins,
-  credentials: true
-}));
+app.use(cors(corsOptions));
 app.use(express.json());
 app.use(cookieParser());
 
@@ -181,14 +168,8 @@ app.use('/api/seller',        sellerRoutes);
 app.use('/api/chats',         chatRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/upload',        uploadRoutes);
-// app.use('/api/saved-searches', savedSearchRoutes);
 
-app.get('/', (req, res) => res.send('Hey , I am healthy!'));
+app.get('/api/health', (_, res) => res.json({ status: 'ok' }));
 
 const PORT = process.env.PORT || 5000;
-const HOST = process.env.NODE_ENV === 'production' ? '0.0.0.0' : 'localhost';
-
-server.listen(PORT, HOST, () => {
-  console.log(`🚀 Server running on http://${HOST}:${PORT}`);
-  console.log(`📡 Environment: ${process.env.NODE_ENV || 'development'}`);
-});
+server.listen(PORT, () => console.log(`🚀 Server running on http://localhost:${PORT}`));
