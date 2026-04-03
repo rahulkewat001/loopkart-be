@@ -21,8 +21,24 @@ const validateCoupon = (req, res) => {
 
 const createOrder = async (req, res) => {
   try {
+    console.log('Order request body:', JSON.stringify(req.body, null, 2));
+    console.log('User:', req.user?._id);
+    
     const { items, totalAmount, address, couponCode, discountAmount, paymentId, paymentStatus } = req.body;
-    if (!items?.length) return res.status(400).json({ message: 'No items in order' });
+    
+    if (!items?.length) {
+      console.log('No items in order');
+      return res.status(400).json({ message: 'No items in order' });
+    }
+
+    console.log('Creating order with data:', {
+      user: req.user._id,
+      itemsCount: items.length,
+      totalAmount,
+      address,
+      paymentId,
+      paymentStatus
+    });
 
     const order = await Order.create({
       user: req.user._id,
@@ -35,6 +51,8 @@ const createOrder = async (req, res) => {
       discountAmount: discountAmount || 0,
       timeline: [{ status: 'confirmed', message: 'Order placed successfully' }],
     });
+
+    console.log('Order created successfully:', order._id);
 
     // Send notification
     try {
@@ -53,7 +71,8 @@ const createOrder = async (req, res) => {
     res.status(201).json({ order });
   } catch (err) {
     console.error('Order creation error:', err);
-    res.status(500).json({ message: 'Server error', error: err.message });
+    console.error('Error stack:', err.stack);
+    res.status(500).json({ message: 'Server error', error: err.message, stack: err.stack });
   }
 };
 
