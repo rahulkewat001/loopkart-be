@@ -24,6 +24,9 @@ const createOrder = async (req, res) => {
     const { items, totalAmount, address, couponCode, discountAmount } = req.body;
     if (!items?.length) return res.status(400).json({ message: 'No items in order' });
 
+    console.log('Creating order for user:', req.user._id);
+    console.log('Order data:', { items, totalAmount, address, couponCode, discountAmount });
+
     const order = await Order.create({
       user: req.user._id,
       items,
@@ -34,18 +37,27 @@ const createOrder = async (req, res) => {
       timeline: [{ status: 'confirmed', message: 'Order placed successfully' }],
     });
 
-    // Send notification
-    await createNotification({
-      userId:  req.user._id,
-      type:    'order',
-      title:   'Order Placed! 🎉',
-      message: `Your order #${order._id.toString().slice(-8).toUpperCase()} has been confirmed.`,
-      link:    '/orders',
-      icon:    '📦',
-    });
+    console.log('Order created successfully:', order._id);
+
+    // Send notification (non-blocking)
+    try {
+      await createNotification({
+        userId:  req.user._id,
+        type:    'order',
+        title:   'Order Placed! 🎉',
+        message: `Your order #${order._id.toString().slice(-8).toUpperCase()} has been confirmed.`,
+        link:    '/orders',
+        icon:    '📦',
+      });
+      console.log('Notification sent successfully');
+    } catch (notifErr) {
+      console.error('Notification error (non-critical):', notifErr.message);
+      // Don't fail the order if notification fails
+    }
 
     res.status(201).json({ order });
   } catch (err) {
+    console.error('Order creation error:', err);
     res.status(500).json({ message: 'Server error', error: err.message });
   }
 };
