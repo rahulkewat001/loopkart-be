@@ -1,6 +1,6 @@
 const router  = require('express').Router();
 const protect = require('../middleware/authMiddleware');
-const upload = require('../middleware/upload');
+const { upload } = require('../middleware/upload');
 const { getMe, updateMe, changePassword, uploadAvatar } = require('../controllers/profileController');
 
 router.use(protect);

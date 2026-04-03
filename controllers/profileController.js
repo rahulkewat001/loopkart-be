@@ -1,5 +1,5 @@
 const User = require('../models/User');
-const cloudinary = require('cloudinary').v2;
+const { uploadToCloudinary } = require('../middleware/upload');
 
 const getMe = (req, res) => res.json({ user: req.user });
 
@@ -35,22 +35,15 @@ const uploadAvatar = async (req, res) => {
   try {
     if (!req.file) return res.status(400).json({ message: 'No file uploaded' });
     
-    const uploadStream = cloudinary.uploader.upload_stream(
-      { folder: 'loopkart/avatars', width: 200, height: 200, crop: 'fill' },
-      async (err, result) => {
-        if (err) return res.status(500).json({ message: 'Upload failed', error: err.message });
-        
-        const user = await User.findByIdAndUpdate(
-          req.user._id,
-          { avatar: result.secure_url },
-          { new: true }
-        ).select('-password -refreshTokens');
-        
-        res.json({ user });
-      }
-    );
+    const result = await uploadToCloudinary(req.file.buffer, 'loopkart/avatars');
     
-    require('stream').Readable.from(req.file.buffer).pipe(uploadStream);
+    const user = await User.findByIdAndUpdate(
+      req.user._id,
+      { avatar: result.secure_url },
+      { new: true }
+    ).select('-password -refreshTokens');
+    
+    res.json({ user });
   } catch (err) {
     res.status(500).json({ message: 'Upload failed', error: err.message });
   }

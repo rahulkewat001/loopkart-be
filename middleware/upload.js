@@ -30,4 +30,3 @@ const uploadToCloudinary = (buffer, folder = 'loopkart') => {
 };
 
 module.exports = { upload, uploadToCloudinary };
-module.exports = upload;
