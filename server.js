@@ -21,7 +21,7 @@ const sellerRoutes         = require('./routes/sellerRoutes');
 const chatRoutes           = require('./routes/chatRoutes');
 const notificationRoutes   = require('./routes/notificationRoutes');
 const uploadRoutes         = require('./routes/uploadRoutes');
-const savedSearchRoutes    = require('./routes/savedSearchRoutes');
+// const savedSearchRoutes    = require('./routes/savedSearchRoutes');
 
 connectDB();
 
@@ -181,7 +181,7 @@ app.use('/api/seller',        sellerRoutes);
 app.use('/api/chats',         chatRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/upload',        uploadRoutes);
-app.use('/api/saved-searches', savedSearchRoutes);
+// app.use('/api/saved-searches', savedSearchRoutes);
 
 app.get('/', (req, res) => res.send('Hey , I am healthy!'));
 
