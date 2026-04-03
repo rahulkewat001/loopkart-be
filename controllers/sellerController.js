@@ -75,15 +75,22 @@ const getSellerDashboard = async (req, res) => {
 // ─── List a Product ───────────────────────────────────────────
 const createListing = async (req, res) => {
   try {
-    const { name, emoji, price, originalPrice, category, description, stock, condition, badge } = req.body;
+    const { name, emoji, image, price, originalPrice, category, description, stock, condition, badge } = req.body;
 
     if (!name || !price || !category)
       return res.status(400).json({ message: 'Name, price and category are required' });
 
     const product = await Product.create({
-      name, emoji: emoji || '📦', price, originalPrice: originalPrice || price,
-      category, description, stock: stock || 1,
-      condition: condition || 'good', badge: badge || null,
+      name, 
+      emoji: emoji || '📦', 
+      image: image || '',
+      price, 
+      originalPrice: originalPrice || price,
+      category, 
+      description, 
+      stock: stock || 1,
+      condition: condition || 'good', 
+      badge: badge || null,
       seller: req.user._id,
       sellerName: req.user.sellerProfile?.shopName || req.user.name,
       isSellerListing: true,
