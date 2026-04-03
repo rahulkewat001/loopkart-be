@@ -29,6 +29,9 @@ const server = http.createServer(app);
 const allowedOrigins = new Set([
   'http://localhost:5173',
   'http://127.0.0.1:5173',
+  'https://loopkarts.in',
+  'https://www.loopkarts.in',
+  'https://loopkart-be.onrender.com'
 ]);
 const corsOptions = {
   origin(origin, callback) {
