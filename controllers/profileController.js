@@ -35,7 +35,7 @@ const uploadAvatar = async (req, res) => {
   try {
     if (!req.file) return res.status(400).json({ message: 'No file uploaded' });
     
-    const result = await cloudinary.uploader.upload_stream(
+    const uploadStream = cloudinary.uploader.upload_stream(
       { folder: 'loopkart/avatars', width: 200, height: 200, crop: 'fill' },
       async (err, result) => {
         if (err) return res.status(500).json({ message: 'Upload failed', error: err.message });
@@ -50,7 +50,7 @@ const uploadAvatar = async (req, res) => {
       }
     );
     
-    require('stream').Readable.from(req.file.buffer).pipe(result);
+    require('stream').Readable.from(req.file.buffer).pipe(uploadStream);
   } catch (err) {
     res.status(500).json({ message: 'Upload failed', error: err.message });
   }
