@@ -30,4 +30,21 @@ const changePassword = async (req, res) => {
   }
 };
 
-module.exports = { getMe, updateMe, changePassword };
+const updateAvatar = async (req, res) => {
+  try {
+    const { avatar } = req.body;
+    if (!avatar) return res.status(400).json({ message: 'Avatar URL required' });
+    
+    const user = await User.findByIdAndUpdate(
+      req.user._id,
+      { avatar },
+      { new: true }
+    ).select('-password -refreshTokens');
+    
+    res.json({ user });
+  } catch (err) {
+    res.status(500).json({ message: 'Server error', error: err.message });
+  }
+};
+
+module.exports = { getMe, updateMe, changePassword, updateAvatar };
