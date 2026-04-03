@@ -67,6 +67,44 @@ const login = async (req, res) => {
   }
 };
 
+// ─── Google OAuth ─────────────────────────────────────────────
+const googleAuth = async (req, res) => {
+  try {
+    const { email, name, googleId, avatar } = req.body;
+
+    if (!email || !name || !googleId)
+      return res.status(400).json({ message: 'Missing required Google data' });
+
+    // Check if user exists
+    let user = await User.findOne({ email });
+
+    if (!user) {
+      // Create new user with Google data
+      user = await User.create({
+        name,
+        email,
+        password: Math.random().toString(36).slice(-8) + 'Aa1!', // Random password (won't be used)
+        avatar: avatar || undefined,
+        googleId
+      });
+    } else if (!user.googleId) {
+      // Link Google account to existing user
+      user.googleId = googleId;
+      if (avatar && !user.avatar) user.avatar = avatar;
+      await user.save();
+    }
+
+    // Generate tokens
+    const { accessToken, refreshToken } = generateTokens(user._id);
+    await User.updateOne({ _id: user._id }, { $push: { refreshTokens: refreshToken } });
+
+    res.json({ user, accessToken, refreshToken });
+  } catch (err) {
+    console.error('Google auth error:', err);
+    res.status(500).json({ message: 'Google authentication failed', error: err.message });
+  }
+};
+
 // ─── Logout ───────────────────────────────────────────────────
 const logout = async (req, res) => {
   try {
@@ -107,4 +145,4 @@ const refreshToken = async (req, res) => {
   }
 };
 
-module.exports = { register, login, logout, refreshToken };
+module.exports = { register, login, googleAuth, logout, refreshToken };
