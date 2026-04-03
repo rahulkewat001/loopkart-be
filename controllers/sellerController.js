@@ -12,9 +12,12 @@ const isSeller = (req, res, next) => {
 // ─── Become a Seller ──────────────────────────────────────────
 const becomeSeller = async (req, res) => {
   try {
-    const { shopName, shopDesc, phone, city, state } = req.body;
+    const { shopName, shopDesc, phone, city, state, categories } = req.body;
     if (!shopName || !phone || !city || !state)
       return res.status(400).json({ message: 'All fields are required' });
+    
+    if (!categories || categories.length === 0)
+      return res.status(400).json({ message: 'Select at least one category' });
 
     if (req.user.role === 'seller')
       return res.status(400).json({ message: 'You are already a seller' });
@@ -23,7 +26,7 @@ const becomeSeller = async (req, res) => {
       req.user._id,
       {
         role: 'seller',
-        sellerProfile: { shopName, shopDesc, phone, city, state, approved: true, joinedAt: new Date() },
+        sellerProfile: { shopName, shopDesc, phone, city, state, categories, approved: true, joinedAt: new Date() },
       },
       { new: true }
     ).select('-password -refreshTokens');

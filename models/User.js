@@ -19,6 +19,7 @@ const userSchema = new mongoose.Schema({
     phone:       { type: String, default: '' },
     city:        { type: String, default: '' },
     state:       { type: String, default: '' },
+    categories:  [{ type: String }], // Categories seller wants to sell in
     approved:    { type: Boolean, default: true }, // auto-approve for now
     totalSales:  { type: Number, default: 0 },
     rating:      { type: Number, default: 0 },
