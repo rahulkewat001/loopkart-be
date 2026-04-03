@@ -155,7 +155,8 @@ io.on('connection', (socket) => {
 
 // ─── Express Middleware ───────────────────────────────────────
 app.use(cors(corsOptions));
-app.use(express.json());
+app.use(express.json({ limit: '10mb' })); // Increase limit for base64 images
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ─── Routes ───────────────────────────────────────────────────

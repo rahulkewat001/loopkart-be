@@ -5,25 +5,39 @@ const { upload, uploadToCloudinary } = require('../middleware/upload');
 // Upload single image (root route)
 router.post('/', protect, upload.single('image'), async (req, res) => {
   try {
-    console.log('Upload request received');
-    console.log('File:', req.file ? 'Present' : 'Missing');
+    console.log('=== Upload Request ===');
+    console.log('File received:', req.file ? 'Yes' : 'No');
+    if (req.file) {
+      console.log('File details:', {
+        originalname: req.file.originalname,
+        mimetype: req.file.mimetype,
+        size: req.file.size
+      });
+    }
     console.log('Cloudinary config:', {
-      cloud_name: process.env.CLOUDINARY_CLOUD_NAME ? 'Set' : 'Missing',
-      api_key: process.env.CLOUDINARY_API_KEY ? 'Set' : 'Missing',
-      api_secret: process.env.CLOUDINARY_API_SECRET ? 'Set' : 'Missing'
+      cloud_name: process.env.CLOUDINARY_CLOUD_NAME || 'NOT SET',
+      api_key: process.env.CLOUDINARY_API_KEY ? 'SET' : 'NOT SET',
+      api_secret: process.env.CLOUDINARY_API_SECRET ? 'SET' : 'NOT SET'
     });
     
-    if (!req.file) return res.status(400).json({ message: 'No file uploaded' });
-    
-    if (!process.env.CLOUDINARY_CLOUD_NAME || !process.env.CLOUDINARY_API_KEY || !process.env.CLOUDINARY_API_SECRET) {
-      return res.status(500).json({ message: 'Cloudinary not configured' });
+    if (!req.file) {
+      console.log('ERROR: No file in request');
+      return res.status(400).json({ message: 'No file uploaded' });
     }
     
+    if (!process.env.CLOUDINARY_CLOUD_NAME || !process.env.CLOUDINARY_API_KEY || !process.env.CLOUDINARY_API_SECRET) {
+      console.log('ERROR: Cloudinary credentials missing');
+      return res.status(500).json({ message: 'Cloudinary not configured. Please contact admin.' });
+    }
+    
+    console.log('Uploading to Cloudinary...');
     const result = await uploadToCloudinary(req.file.buffer, 'loopkart/products');
-    console.log('Upload successful:', result.secure_url);
+    console.log('Upload successful! URL:', result.secure_url);
     res.json({ url: result.secure_url, publicId: result.public_id });
   } catch (err) {
-    console.error('Upload error:', err);
+    console.error('=== Upload Error ===');
+    console.error('Error message:', err.message);
+    console.error('Error stack:', err.stack);
     res.status(500).json({ message: 'Upload failed', error: err.message });
   }
 });
