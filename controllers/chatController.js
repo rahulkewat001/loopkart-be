@@ -10,6 +10,10 @@ const startChat = async (req, res) => {
     if (buyerId.toString() === sellerId)
       return res.status(400).json({ message: 'You cannot chat with yourself' });
 
+    // Verify the other user exists
+    const otherUser = await User.findById(sellerId);
+    if (!otherUser) return res.status(404).json({ message: 'User not found' });
+
     // Check if chat already exists for this buyer-seller-product combo
     let chat = await Chat.findOne({
       participants: { $all: [buyerId, sellerId] },
