@@ -1,5 +1,4 @@
 const User = require('../models/User');
-const { uploadToCloudinary } = require('../middleware/upload');
 
 const getMe = (req, res) => res.json({ user: req.user });
 
@@ -9,7 +8,7 @@ const updateMe = async (req, res) => {
     const user = await User.findByIdAndUpdate(
       req.user._id,
       { name, email },
-      { returnDocument: 'after', runValidators: true }
+      { new: true, runValidators: true }
     ).select('-password -refreshTokens');
     res.json({ user });
   } catch (err) {
@@ -31,22 +30,4 @@ const changePassword = async (req, res) => {
   }
 };
 
-const uploadAvatar = async (req, res) => {
-  try {
-    if (!req.file) return res.status(400).json({ message: 'No file uploaded' });
-    
-    const result = await uploadToCloudinary(req.file.buffer, 'loopkart/avatars');
-    
-    const user = await User.findByIdAndUpdate(
-      req.user._id,
-      { avatar: result.secure_url },
-      { returnDocument: 'after' }
-    ).select('-password -refreshTokens');
-    
-    res.json({ user });
-  } catch (err) {
-    res.status(500).json({ message: 'Upload failed', error: err.message });
-  }
-};
-
-module.exports = { getMe, updateMe, changePassword, uploadAvatar };
+module.exports = { getMe, updateMe, changePassword };
