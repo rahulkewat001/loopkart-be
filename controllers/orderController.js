@@ -21,7 +21,7 @@ const validateCoupon = (req, res) => {
 
 const createOrder = async (req, res) => {
   try {
-    const { items, totalAmount, address, couponCode, discountAmount } = req.body;
+    const { items, totalAmount, address, couponCode, discountAmount, paymentId, paymentStatus } = req.body;
     if (!items?.length) return res.status(400).json({ message: 'No items in order' });
 
     const order = await Order.create({
@@ -29,23 +29,30 @@ const createOrder = async (req, res) => {
       items,
       totalAmount,
       address,
-      couponCode:     couponCode || null,
+      paymentId: paymentId || null,
+      paymentStatus: paymentStatus || 'pending',
+      couponCode: couponCode || null,
       discountAmount: discountAmount || 0,
       timeline: [{ status: 'confirmed', message: 'Order placed successfully' }],
     });
 
     // Send notification
-    await createNotification({
-      userId:  req.user._id,
-      type:    'order',
-      title:   'Order Placed! 🎉',
-      message: `Your order #${order._id.toString().slice(-8).toUpperCase()} has been confirmed.`,
-      link:    '/orders',
-      icon:    '📦',
-    });
+    try {
+      await createNotification({
+        userId:  req.user._id,
+        type:    'order',
+        title:   'Order Placed! 🎉',
+        message: `Your order #${order._id.toString().slice(-8).toUpperCase()} has been confirmed.`,
+        link:    '/orders',
+        icon:    '📦',
+      });
+    } catch (notifErr) {
+      console.error('Notification error:', notifErr);
+    }
 
     res.status(201).json({ order });
   } catch (err) {
+    console.error('Order creation error:', err);
     res.status(500).json({ message: 'Server error', error: err.message });
   }
 };
