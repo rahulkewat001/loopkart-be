@@ -9,7 +9,7 @@ const updateMe = async (req, res) => {
     const user = await User.findByIdAndUpdate(
       req.user._id,
       { name, email },
-      { new: true, runValidators: true }
+      { returnDocument: 'after', runValidators: true }
     ).select('-password -refreshTokens');
     res.json({ user });
   } catch (err) {
@@ -40,7 +40,7 @@ const uploadAvatar = async (req, res) => {
     const user = await User.findByIdAndUpdate(
       req.user._id,
       { avatar: result.secure_url },
-      { new: true }
+      { returnDocument: 'after' }
     ).select('-password -refreshTokens');
     
     res.json({ user });
