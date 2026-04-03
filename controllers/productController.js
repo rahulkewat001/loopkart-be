@@ -2,7 +2,7 @@ const Product = require('../models/Product');
 
 const getProducts = async (req, res) => {
   try {
-    const { category, search, page = 1, limit = 12 } = req.query;
+    const { category, search, page = 1, limit = 12, sort } = req.query;
     const filter = {};
     if (category) filter.category = category;
     if (search)   filter.$or = [
@@ -11,11 +11,17 @@ const getProducts = async (req, res) => {
       { category:    { $regex: search, $options: 'i' } },
     ];
 
+    // Determine sort order
+    let sortOption = { createdAt: -1 }; // default: newest first
+    if (sort === 'rating') sortOption = { rating: -1, reviews: -1 };
+    else if (sort === 'price_asc') sortOption = { price: 1 };
+    else if (sort === 'price_desc') sortOption = { price: -1 };
+
     const total    = await Product.countDocuments(filter);
     const products = await Product.find(filter)
       .skip((+page - 1) * +limit)
       .limit(+limit)
-      .sort({ createdAt: -1 });
+      .sort(sortOption);
 
     res.json({ products, total, page: +page, pages: Math.ceil(total / +limit) });
   } catch (err) {
